@@ -2089,7 +2089,8 @@ if layers:
         print(time.strftime('%H:%M:%S', time.localtime()), 'Save parking points...')
         QgsVectorFileWriter.writeAsVectorFormat(layer_parking_chain, dir_output + 'street_parking_points.geojson', 'utf-8', QgsCoordinateReferenceSystem(crs_to), save_options.driverName)
 
-    #focus on parking layer
-    iface.mapCanvas().setExtent(layer_parking.extent())
+    if iface:
+        #focus on parking layer
+        iface.mapCanvas().setExtent(layer_parking.extent())
 
     print(time.strftime('%H:%M:%S', time.localtime()), 'Completed.')
