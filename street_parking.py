@@ -33,6 +33,10 @@ dir_output = dir + 'data/output/'
 #A metric CRS is necessary to calculate with metre units and distances.
 crs_from = "EPSG:4326"
 crs_to = "EPSG:25833"
+
+# Override settings from environment variables, if present
+crs_to = os.environ.get("OSM_STREET_PARKING_CRS_TO", crs_to)
+
 transform_context = QgsCoordinateTransformContext()
 transform_context.addCoordinateOperation(QgsCoordinateReferenceSystem(crs_from), QgsCoordinateReferenceSystem(crs_to), "")
 coordinateTransformContext=QgsProject.instance().transformContext()
