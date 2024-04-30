@@ -19,9 +19,12 @@ from qgis.utils import iface
 from os.path import exists
 import os, processing, math, time
 
-#working directory, see https://stackoverflow.com/a/65543293/729221
-from console.console import _console
-dir = _console.console.tabEditorWidget.currentWidget().path.replace("street_parking.py","")
+try:
+    #working directory, see https://stackoverflow.com/a/65543293/729221
+    from console.console import _console
+    dir = os.path.dirname(_console.console.tabEditorWidget.currentWidget().path) + '/'
+except ImportError:
+    dir = os.path.dirname(__file__) + '/'
 dir_input = dir + 'data/input.geojson'
 dir_output = dir + 'data/output/'
 
