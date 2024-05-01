@@ -37,13 +37,6 @@ crs_to = "EPSG:25833"
 # Override settings from environment variables, if present
 crs_to = os.environ.get("OSM_STREET_PARKING_CRS_TO", crs_to)
 
-transform_context = QgsCoordinateTransformContext()
-transform_context.addCoordinateOperation(QgsCoordinateReferenceSystem(crs_from), QgsCoordinateReferenceSystem(crs_to), "")
-coordinateTransformContext=QgsProject.instance().transformContext()
-save_options = QgsVectorFileWriter.SaveVectorOptions()
-save_options.driverName = 'GeoJSON'
-save_options.ct = QgsCoordinateTransform(QgsCoordinateReferenceSystem(crs_from), QgsCoordinateReferenceSystem(crs_to), coordinateTransformContext)
-
 #default width of streets (if not specified more precisely on the data object)
 width_minor_street = 11
 width_primary_street = 17
@@ -1841,6 +1834,27 @@ def getCapacity(layer):
 
 
 
+def write_as_vector_format(layer, filename, dst_crs):
+    has_v3 = hasattr(QgsVectorFileWriter, "writeAsVectorFormatV3")
+    has_v2 = hasattr(QgsVectorFileWriter, "writeAsVectorFormatV2")
+
+    if has_v3 or has_v2:
+        transform_context = QgsCoordinateTransformContext()
+        transform_context.addCoordinateOperation(QgsCoordinateReferenceSystem(layer.crs()), QgsCoordinateReferenceSystem(dst_crs), "")
+        coordinateTransformContext = QgsProject.instance().transformContext()
+        save_options = QgsVectorFileWriter.SaveVectorOptions()
+        save_options.driverName = 'GeoJSON'
+        save_options.ct = QgsCoordinateTransform(QgsCoordinateReferenceSystem(layer.crs()), QgsCoordinateReferenceSystem(dst_crs), coordinateTransformContext)
+
+    if has_v3:
+        QgsVectorFileWriter.writeAsVectorFormatV3(layer, filename, transform_context, save_options)
+    elif has_v2:
+        QgsVectorFileWriter.writeAsVectorFormatV2(layer, filename, transform_context, save_options)
+    else:
+        QgsVectorFileWriter.writeAsVectorFormat(layer, filename, 'utf-8', QgsCoordinateReferenceSystem(dst_crs), 'GeoJson')
+
+
+
 #------------------------------------------------------------------------------#
 #      S c r i p t   S t a r t                                                 #
 #------------------------------------------------------------------------------#
@@ -2042,7 +2056,7 @@ if layers:
     layer_parking = clearAttributes(layer_parking, line_attribute_list)
 
     print(time.strftime('%H:%M:%S', time.localtime()), 'Save street parking features...')
-    QgsVectorFileWriter.writeAsVectorFormat(layer_parking, dir_output + 'street_parking_lines.geojson', 'utf-8', QgsCoordinateReferenceSystem(crs_to), save_options.driverName)
+    write_as_vector_format(layer_parking, dir_output + 'street_parking_lines.geojson', crs_to)
 
     #add street parking to map
     layer_no_parking.setName('no street parking')
@@ -2091,7 +2105,7 @@ if layers:
         layer_parking_chain.loadNamedStyle(dir + 'styles/parking_chain.qml')
 
         print(time.strftime('%H:%M:%S', time.localtime()), 'Save parking points...')
-        QgsVectorFileWriter.writeAsVectorFormat(layer_parking_chain, dir_output + 'street_parking_points.geojson', 'utf-8', QgsCoordinateReferenceSystem(crs_to), save_options.driverName)
+        write_as_vector_format(layer_parking_chain, dir_output + 'street_parking_points.geojson', crs_to)
 
     if iface:
         #focus on parking layer
